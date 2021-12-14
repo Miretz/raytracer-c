@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_DEPRECATE
+#include <pthread.h>
 #include <stdio.h>
 
 #include "camera.h"
@@ -12,7 +13,7 @@
 const double aspectRatio = 3.0 / 2.0;
 const int imageWidth = 600;
 const int imageHeight = (int)(imageWidth / aspectRatio);
-const int samplesPerPixel = 50;
+const int samplesPerPixel = 100;
 const int maxDepth = 50;
 
 color Ray_Color(ray *r, hittable_list *world, int depth) {
@@ -98,6 +99,38 @@ hittable_list randomScene() {
     return world;
 }
 
+typedef struct thread_data {
+    int startRow;
+    int stopRow;
+    camera *cam;
+    hittable_list *world;
+    color *out;
+} thread_data;
+
+void *renderPixel(void *arg) {
+    thread_data *tdata = (thread_data *)arg;
+    int start = (*tdata).startRow;
+    int stop = (*tdata).stopRow;
+    for (int j = start; j < stop; ++j) {
+        for (int i = 0; i < imageWidth; ++i) {
+            color pixelColor = NewColor(0, 0, 0);
+            for (int s = 0; s < samplesPerPixel; ++s) {
+                double u = (i + RandomDouble()) / (imageWidth - 1);
+                double v = (j + RandomDouble()) / (imageHeight - 1);
+                ray r = GetRay(tdata->cam, u, v);
+                vec3 rayColor = Ray_Color(&r, tdata->world, maxDepth);
+                Vec3_AddAssign(&pixelColor, &rayColor);
+            }
+            int invJ = imageHeight - j - 1;
+            int index = imageWidth * invJ + i;
+            (*tdata).out[index] = pixelColor;
+        }
+    }
+    printf("Thread with range (%d, %d) finished\n", start, stop);
+    pthread_exit(NULL);
+    return NULL;
+}
+
 void Render() {
 
     // Create World
@@ -112,28 +145,38 @@ void Render() {
     camera cam = NewCamera(lookfrom, lookat, vup, 20, aspectRatio, aperture,
                            distToFocus);
 
+    color *pixelColorArray =
+        (color *)malloc(sizeof(color) * imageWidth * imageHeight);
+
+    // Multi-thread render
+    int threadSize = 4;
+    pthread_t tid[threadSize];
+    thread_data td[threadSize];
+    for (int t = 0; t < threadSize; ++t) {
+        td[t].startRow = t * (imageHeight / threadSize);
+        td[t].stopRow = (t + 1) * (imageHeight / threadSize);
+        td[t].cam = &cam;
+        td[t].world = &world;
+        td[t].out = pixelColorArray;
+        printf("Thread with range (%d, %d) started\n", td[t].startRow,
+               td[t].stopRow);
+        pthread_create(&(tid[t]), NULL, renderPixel, (void *)&(td[t]));
+    }
+    for (int i = 0; i < threadSize; ++i) {
+        pthread_join(tid[i], NULL);
+    }
+
+    // output to file
     FILE *file;
     if ((file = fopen("output.ppm", "w+")) == NULL) {
         perror("fopen");
         exit(1);
     }
-
     fprintf(file, "P3\n%d %d\n255\n", imageWidth, imageHeight);
-    for (int j = imageHeight - 1; j >= 0; --j) {
-        fprintf(stderr, "\rScanlines remaining: %d  ", j);
-        for (int i = 0; i < imageWidth; ++i) {
-            color pixelColor = NewColor(0, 0, 0);
-            for (int s = 0; s < samplesPerPixel; ++s) {
-                double u = (i + RandomDouble()) / (imageWidth - 1);
-                double v = (j + RandomDouble()) / (imageHeight - 1);
-                ray r = GetRay(&cam, u, v);
-                vec3 rayColor = Ray_Color(&r, &world, maxDepth);
-                Vec3_AddAssign(&pixelColor, &rayColor);
-            }
-            WriteColor(file, pixelColor, samplesPerPixel);
-        }
+    for (int i = 0; i < imageWidth * imageHeight; ++i) {
+        WriteColor(file, pixelColorArray[i], samplesPerPixel);
     }
-
+    free(pixelColorArray);
     fclose(file);
 }
 

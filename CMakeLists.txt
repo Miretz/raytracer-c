@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(raytracer-c C)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2 -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -Wextra -ggdb")
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 set(SOURCES
     src/rtweekend.h
@@ -18,3 +20,4 @@ set(SOURCES
 )
 
 add_executable(raytracer-c ${SOURCES})
+target_link_libraries(raytracer-c PRIVATE Threads::Threads)
