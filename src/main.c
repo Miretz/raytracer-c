@@ -10,12 +10,13 @@
 #include "sphere.h"
 #include "vec3.h"
 
+
 color Ray_Color(const ray *r, const hittable_list *world, const int depth) {
     if (depth < 0) {
         return (color){0.0, 0.0, 0.0};
     }
     hit_record rec;
-    if (Hittable_Hit(world, r, 0.001, 9999.0, &rec)) {
+    if (Hittable_Hit(world, r, 0.001, 99999999.0, &rec)) {
         ray scattered;
         color attenuation;
         if (Mat_Scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
@@ -119,7 +120,7 @@ void *renderPixel(void *arg) {
     for (int j = start; j < stop; ++j) {
         for (int i = 0; i < width; ++i) {
             color pixelColor = (color){0.0, 0.0, 0.0};
-            for (int s = 0; s < samplesPerPixel; ++s) {
+            for (int s = samplesPerPixel; s; s--) {
                 const double u = (i + RandomDouble()) / (width - 1);
                 const double v = (j + RandomDouble()) / (height - 1);
                 const ray r = GetRay(tdata->cam, u, v);

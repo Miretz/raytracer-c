@@ -13,7 +13,9 @@ typedef struct vec3 {
     double z;
 } vec3;
 
-static inline vec3 Vec3_Neg(const vec3 *v) { return (vec3){-v->x, -v->y, -v->z}; }
+static inline vec3 Vec3_Neg(const vec3 *v) {
+    return (vec3){-v->x, -v->y, -v->z};
+}
 
 static inline void Vec3_AddAssign(vec3 *a, const vec3 *b) {
     a->x += b->x;
@@ -39,7 +41,9 @@ static inline void Vec3_FMulAssign(vec3 *a, const double t) {
     a->z *= t;
 }
 
-static inline void Vec3_FDivAssign(vec3 *a, const double t) { Vec3_FMulAssign(a, 1.0 / t); }
+static inline void Vec3_FDivAssign(vec3 *a, const double t) {
+    Vec3_FMulAssign(a, 1.0 / t);
+}
 
 static inline unsigned int Vec3_NearZero(const vec3 *a) {
     static const double s = 1e-8;
@@ -84,7 +88,7 @@ static inline vec3 Vec3_AddMultiple(const int n, ...) {
     vec3 res = {0, 0, 0};
     va_list ptr = NULL;
     va_start(ptr, n);
-    for (int i = 0; i < n; i++) {
+    for (int i = n; i; i--) {
         vec3 v = va_arg(ptr, vec3);
         res.x += v.x;
         res.y += v.y;
@@ -97,7 +101,7 @@ static inline vec3 Vec3_AddMultiple(const int n, ...) {
 static inline vec3 Vec3_SubMultiple(vec3 start, const int n, ...) {
     va_list ptr = NULL;
     va_start(ptr, n);
-    for (int i = 0; i < n; i++) {
+    for (int i = n; i; i--) {
         vec3 v = va_arg(ptr, vec3);
         start.x -= v.x;
         start.y -= v.y;
@@ -107,28 +111,36 @@ static inline vec3 Vec3_SubMultiple(vec3 start, const int n, ...) {
     return start;
 }
 
-static inline vec3 Vec3_FDiv(const vec3 *a, const double t) { return Vec3_FMul(a, 1.0 / t); }
+static inline vec3 Vec3_FDiv(const vec3 *a, const double t) {
+    return Vec3_FMul(a, 1.0 / t);
+}
 
 static inline double Vec3_Dot(const vec3 *a, const vec3 *b) {
     return a->x * b->x + a->y * b->y + a->z * b->z;
 }
 
 static inline vec3 Vec3_Cross(const vec3 *u, const vec3 *v) {
-    vec3 result = {
+    return (vec3){
         u->y * v->z - u->z * v->y,
         u->z * v->x - u->x * v->z,
         u->x * v->y - u->y * v->x,
     };
-    return result;
 }
 
 static inline double Vec3_LengthSquared(const vec3 *a) {
-    return a->x * a->x + a->y * a->y + a->z * a->z;
+    double x = a->x;
+    double y = a->y;
+    double z = a->z;
+    return x * x + y * y + z * z;
 }
 
-static inline double Vec3_Length(const vec3 *a) { return sqrt(Vec3_LengthSquared(a)); }
+static inline double Vec3_Length(const vec3 *a) {
+    return sqrt(Vec3_LengthSquared(a));
+}
 
-static inline vec3 Vec3_UnitVector(const vec3 *a) { return Vec3_FDiv(a, Vec3_Length(a)); }
+static inline vec3 Vec3_UnitVector(const vec3 *a) {
+    return Vec3_FDiv(a, Vec3_Length(a));
+}
 
 static inline vec3 Vec3_Random() {
     return (vec3){RandomDouble(), RandomDouble(), RandomDouble()};
@@ -167,7 +179,8 @@ static inline vec3 Vec3_Reflect(const vec3 *v, const vec3 *n) {
     return Vec3_Sub(v, &t1);
 }
 
-static inline vec3 Vec3_Refract(const vec3 *uv, const vec3 *n, const double etaiOverEtat) {
+static inline vec3 Vec3_Refract(const vec3 *uv, const vec3 *n,
+                                const double etaiOverEtat) {
     const vec3 negUv = Vec3_Neg(uv);
     const vec3 t = Vec3_FMul(n, fmin(Vec3_Dot(&negUv, n), 1.0));
     const vec3 tmp = Vec3_Add(uv, &t);

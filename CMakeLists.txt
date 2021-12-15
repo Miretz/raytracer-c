@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(raytracer-c C)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -Wextra -ggdb")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -Wextra -O3 -ffast-math")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
