@@ -11,15 +11,15 @@
 #include "vec3.h"
 
 
-color Ray_Color(const ray *r, const hittable_list *world, const int depth) {
+color Ray_Color(const ray *r, hittable_list *world, const int depth) {
     if (depth < 0) {
         return (color){0.0, 0.0, 0.0};
     }
-    hit_record rec;
-    if (Hittable_Hit(world, r, 0.001, 99999999.0, &rec)) {
+    hit_record rec = {};
+    if (Hittable_Hit(world, r, 0.001, 99999.0, &rec)) {
         ray scattered;
         color attenuation;
-        if (Mat_Scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
+        if (Mat_Scatter(rec.matPtr, r, &rec, &attenuation, &scattered)) {
             vec3 rc = Ray_Color(&scattered, world, depth - 1);
             Vec3_MulAssign(&rc, &attenuation);
             return rc;

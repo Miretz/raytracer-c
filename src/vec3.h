@@ -191,11 +191,11 @@ static inline vec3 Vec3_Refract(const vec3 *uv, const vec3 *n,
     return rOutPerp;
 }
 
-static inline vec3 Vec3_RandomInUnitDisk() {
+static inline vec3 Vec3_RandomInUnitDisk(double radius) {
     while (1) {
-        const vec3 p = {RandomBetween(-1.0, 1.0), RandomBetween(-1.0, 1.0),
-                        0.0};
-        if (Vec3_LengthSquared(&p) < 1.0) {
+        const vec3 p = {RandomBetween(-radius, radius),
+                        RandomBetween(-radius, radius), 0.0};
+        if (Vec3_LengthSquared(&p) < radius) {
             return p;
         }
     }

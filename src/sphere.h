@@ -6,7 +6,7 @@
 #include "material.h"
 #include "vec3.h"
 
-static inline unsigned int Sphere_Hit(const sphere *s, const ray *r, const double tMin,
+static inline unsigned int Sphere_Hit(sphere *s, const ray *r, const double tMin,
                const double tMax, hit_record *rec) {
     const vec3 oc = Vec3_Sub(&r->origin, &s->center);
     const double halfB = Vec3_Dot(&oc, &r->direction);
@@ -32,7 +32,7 @@ static inline unsigned int Sphere_Hit(const sphere *s, const ray *r, const doubl
     vec3 outwardNormal = Vec3_Sub(&rec->p, &s->center);
     Vec3_FDivAssign(&outwardNormal, s->radius);
     Hittable_SetFaceNormal(r, &outwardNormal, rec);
-    rec->mat = s->mat;
+    rec->matPtr = &s->mat;
     return 1;
 }
 

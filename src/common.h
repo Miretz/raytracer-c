@@ -21,7 +21,7 @@ typedef struct hit_record {
     vec3 normal;
     double t;
     int frontFace;
-    material mat;
+    material* matPtr;
 } hit_record;
 
 

@@ -23,9 +23,7 @@ static inline camera *NewCamera(const point3 lookfrom, const point3 lookat,
                                 const double aspectRatio, const double aperture,
                                 const double focusDist) {
 
-    const double theta = DegreesToRadians(vFov);
-    const double h = tan(theta / 2.0);
-    const double viewportHeight = 2.0 * h;
+    const double viewportHeight = 2.0 * tan(DegreesToRadians(vFov) / 2.0);
     const double viewportWidth = aspectRatio * viewportHeight;
 
     camera *c = malloc(sizeof(camera));
@@ -46,10 +44,10 @@ static inline camera *NewCamera(const point3 lookfrom, const point3 lookat,
 }
 
 static inline ray GetRay(camera *c, double s, double t) {
-    vec3 rd = Vec3_RandomInUnitDisk();
-    Vec3_FMulAssign(&rd, c->lensRadius);
-    const vec3 offset =
-        Vec3_AddMultiple(2, Vec3_FMul(&c->u, rd.x), Vec3_FMul(&c->v, rd.y));
+    const vec3 rd = Vec3_RandomInUnitDisk(c->lensRadius);
+    vec3 offset = Vec3_FMul(&c->u, rd.x);
+    const vec3 offsetV = Vec3_FMul(&c->v, rd.y);
+    Vec3_AddAssign(&offset, &offsetV);
     return (ray){Vec3_Add(&c->origin, &offset),
                  Vec3_AddMultiple(5, &c->lowerLeftCorner,
                                   Vec3_FMul(&c->horizontal, s),
