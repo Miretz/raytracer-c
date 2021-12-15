@@ -5,7 +5,7 @@
 #include "vec3.h"
 #include "material.h"
 
-void Hittable_SetFaceNormal(hit_record *h, ray *r, vec3 *outwardNormal) {
+static inline void Hittable_SetFaceNormal(const ray *r, const vec3 *outwardNormal, hit_record *h) {
     h->frontFace = Vec3_Dot(&r->direction, outwardNormal) < 0.0;
     if (h->frontFace) {
         h->normal = *outwardNormal;

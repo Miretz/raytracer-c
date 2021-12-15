@@ -8,8 +8,8 @@
 
 // Lambertian
 
-int Lambertian_Scatter(material *l, hit_record *rec, color *attenuation,
-                       ray *scattered) {
+static inline unsigned int Lambertian_Scatter(const material *l, const hit_record *rec,
+                       color *attenuation, ray *scattered) {
     vec3 randomUnit = Vec3_RandomUnitVector();
     vec3 scatterDirection = Vec3_Add(&rec->normal, &randomUnit);
     if (Vec3_NearZero(&scatterDirection) == 1) {
@@ -23,13 +23,13 @@ int Lambertian_Scatter(material *l, hit_record *rec, color *attenuation,
 
 // Metal
 
-int Metal_Scatter(material *l, ray *rayIn, hit_record *rec, color *attenuation,
-                  ray *scattered) {
+static inline unsigned int Metal_Scatter(const material *l, const ray *rayIn, const hit_record *rec,
+                  color *attenuation, ray *scattered) {
 
     vec3 unitDir = Vec3_UnitVector(&rayIn->direction);
     vec3 reflected = Vec3_Reflect(&unitDir, &rec->normal);
     vec3 randomInUnit = Vec3_RandomInUnitSphere();
-    Vec3_MulAssign(&randomInUnit, l->fuzz);
+    Vec3_FMulAssign(&randomInUnit, l->fuzz);
     ray scResult = {rec->p, Vec3_Add(&reflected, &randomInUnit)};
     *scattered = scResult;
     *attenuation = l->albedo;
@@ -38,15 +38,15 @@ int Metal_Scatter(material *l, ray *rayIn, hit_record *rec, color *attenuation,
 
 // Dielectric
 
-double Dielectric_Reflectance(double cosine, double refIdx) {
+static inline double Dielectric_Reflectance(const double cosine, const double refIdx) {
     double r0 = (1 - refIdx) / (1 + refIdx);
     r0 = r0 * r0;
     return r0 + (1 - r0) * pow((1 - cosine), 5);
 }
 
-int Dielectric_Scatter(material *l, ray *rayIn, hit_record *rec,
+static inline unsigned int Dielectric_Scatter(const material *l, const ray *rayIn, const hit_record *rec,
                        color *attenuation, ray *scattered) {
-    *attenuation = l->albedo;
+    *attenuation = (color){1.0, 1.0, 1.0};
     double refractionRatio = l->fuzz;
     if (rec->frontFace) {
         refractionRatio = 1.0 / l->fuzz;
@@ -70,20 +70,19 @@ int Dielectric_Scatter(material *l, ray *rayIn, hit_record *rec,
     return 1;
 }
 
-int Mat_Scatter(material *l, ray *rayIn, hit_record *rec, color *attenuation,
+static inline unsigned int Mat_Scatter(const material *l, const ray *rayIn, const hit_record *rec, color *attenuation,
                 ray *scattered) {
 
     if (l->type == 1) {
         return Metal_Scatter(l, rayIn, rec, attenuation, scattered);
     } else if (l->type == 2) {
-        l->albedo = NewColor(1.0, 1.0, 1.0);
         return Dielectric_Scatter(l, rayIn, rec, attenuation, scattered);
     } else {
         return Lambertian_Scatter(l, rec, attenuation, scattered);
     }
 }
 
-material NewMaterial(int type, color albedo, double fuzz) {
+static inline material NewMaterial(int type, color albedo, double fuzz) {
     material l;
     l.type = type;
     l.albedo = albedo;

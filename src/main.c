@@ -10,15 +10,9 @@
 #include "sphere.h"
 #include "vec3.h"
 
-const double aspectRatio = 3.0 / 2.0;
-const int imageWidth = 600;
-const int imageHeight = (int)(imageWidth / aspectRatio);
-const int samplesPerPixel = 100;
-const int maxDepth = 50;
-
-color Ray_Color(ray *r, hittable_list *world, int depth) {
+color Ray_Color(const ray *r, const hittable_list *world, const int depth) {
     if (depth < 0) {
-        return NewColor(0, 0, 0);
+        return (color){0.0, 0.0, 0.0};
     }
     hit_record rec;
     if (Hittable_Hit(world, r, 0.001, 9999.0, &rec)) {
@@ -26,158 +20,206 @@ color Ray_Color(ray *r, hittable_list *world, int depth) {
         color attenuation;
         if (Mat_Scatter(&rec.mat, r, &rec, &attenuation, &scattered)) {
             vec3 rc = Ray_Color(&scattered, world, depth - 1);
-            return Vec3_Mul(&attenuation, &rc);
+            Vec3_MulAssign(&rc, &attenuation);
+            return rc;
         }
     }
-    vec3 unitDirection = Vec3_UnitVector(&r->direction);
+    const vec3 unitDirection = Vec3_UnitVector(&r->direction);
     double t = 0.5 * (unitDirection.y + 1.0);
-    color bgColor1 = {1.0, 1.0, 1.0};
-    color bgColor2 = {0.5, 0.7, 1.0};
+    static const color bgColor1 = {1.0, 1.0, 1.0};
+    static const color bgColor2 = {0.5, 0.7, 1.0};
+
     vec3 r1 = Vec3_FMul(&bgColor1, (1.0 - t));
-    vec3 r2 = Vec3_FMul(&bgColor2, t);
+    const vec3 r2 = Vec3_FMul(&bgColor2, t);
     Vec3_AddAssign(&r1, &r2);
     return r1;
 }
 
-hittable_list randomScene() {
-    hittable_list world = NewHittableList();
+hittable_list *randomScene() {
+    hittable_list *world = NewHittableList();
 
-    material groundMaterial = NewMaterial(0, NewColor(0.5, 0.5, 0.5), 0.0);
-    sphere ground = NewSphere(Point3(0, -1000, 0), 1000, groundMaterial);
-    Hittable_Add(&world, ground);
+    const material groundMaterial = NewMaterial(0, (color){0.5, 0.5, 0.5}, 0.0);
+    const sphere ground =
+        NewSphere((point3){0, -1000, 0}, 1000, groundMaterial);
+    Hittable_Add(world, ground);
 
-    point3 maxDist = Point3(4, 0.2, 0);
+    static const point3 maxDist = {4, 0.2, 0};
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
-            double chooseMat = RandomDouble();
-            point3 center = Point3((double)a + 0.9 * RandomDouble(), 0.2,
-                                   (double)b + 0.9 * RandomDouble());
+            const double chooseMat = RandomDouble();
+            const point3 center = {(double)a + 0.9 * RandomDouble(), 0.2,
+                                   (double)b + 0.9 * RandomDouble()};
 
-            vec3 subPoint = Vec3_Sub(&center, &maxDist);
+            const vec3 subPoint = Vec3_Sub(&center, &maxDist);
             if (Vec3_Length(&subPoint) > 0.9) {
                 material sphereMaterial;
 
                 if (chooseMat < 0.8) {
                     // diffuse
-                    vec3 r1 = Vec3_Random();
-                    vec3 r2 = Vec3_Random();
-                    color albedo = Vec3_Mul(&r1, &r2);
+                    const vec3 r1 = Vec3_Random();
+                    const vec3 r2 = Vec3_Random();
+                    const color albedo = Vec3_Mul(&r1, &r2);
                     sphereMaterial = NewMaterial(0, albedo, 0.0);
-                    Hittable_Add(&world,
-                                 NewSphere(center, 0.2, sphereMaterial));
+
                 } else if (chooseMat < 0.95) {
                     // metal
-                    color albedo = Vec3_RandomBetween(0.5, 1);
-                    double fuzz = RandomBetween(0, 0.5);
+                    const color albedo = Vec3_RandomBetween(0.5, 1);
+                    const double fuzz = RandomBetween(0, 0.5);
                     sphereMaterial = NewMaterial(1, albedo, fuzz);
-                    Hittable_Add(&world,
-                                 NewSphere(center, 0.2, sphereMaterial));
                 } else {
                     // glass
                     sphereMaterial =
-                        NewMaterial(2, NewColor(1.0, 1.0, 1.0), 1.5);
-                    Hittable_Add(&world,
-                                 NewSphere(center, 0.2, sphereMaterial));
+                        NewMaterial(2, (color){1.0, 1.0, 1.0}, 1.5);
                 }
+
+                Hittable_Add(world, NewSphere(center, 0.2, sphereMaterial));
             }
         }
     }
 
-    material material1 = NewMaterial(2, NewColor(1.0, 1.0, 1.0), 1.5);
-    material material2 = NewMaterial(0, NewColor(0.4, 0.2, 0.1), 0.0);
-    material material3 = NewMaterial(1, NewColor(0.7, 0.6, 0.5), 0.0);
+    const material material1 = NewMaterial(2, (color){1.0, 1.0, 1.0}, 1.5);
+    const material material2 = NewMaterial(0, (color){0.4, 0.2, 0.1}, 0.0);
+    const material material3 = NewMaterial(1, (color){0.7, 0.6, 0.5}, 0.0);
 
-    sphere s1 = NewSphere(Point3(0, 1, 0), 1.0, material1);
-    sphere s2 = NewSphere(Point3(-4, 1, 0), 1.0, material2);
-    sphere s3 = NewSphere(Point3(4, 1, 0), 1.0, material3);
+    const sphere s1 = NewSphere((point3){0, 1, 0}, 1.0, material1);
+    const sphere s2 = NewSphere((point3){-4, 1, 0}, 1.0, material2);
+    const sphere s3 = NewSphere((point3){4, 1, 0}, 1.0, material3);
 
-    Hittable_Add(&world, s1);
-    Hittable_Add(&world, s2);
-    Hittable_Add(&world, s3);
+    Hittable_Add(world, s1);
+    Hittable_Add(world, s2);
+    Hittable_Add(world, s3);
 
     return world;
 }
 
-typedef struct thread_data {
+typedef struct thread_input {
     int startRow;
     int stopRow;
+    int imageWidth;
+    int imageHeight;
+    int samplesPerPixel;
+    int maxDepth;
     camera *cam;
     hittable_list *world;
-    color *out;
-} thread_data;
+} thread_input;
 
 void *renderPixel(void *arg) {
-    thread_data *tdata = (thread_data *)arg;
-    int start = (*tdata).startRow;
-    int stop = (*tdata).stopRow;
+    thread_input *tdata = (thread_input *)arg;
+
+    const int width = tdata->imageWidth;
+    const int height = tdata->imageHeight;
+    const int samplesPerPixel = tdata->samplesPerPixel;
+    const int maxDepth = tdata->maxDepth;
+    const int start = tdata->startRow;
+    const int stop = tdata->stopRow;
+
+    color *outData = (color *)malloc(((stop - start) * width) * sizeof(color));
+    int index = 0;
     for (int j = start; j < stop; ++j) {
-        for (int i = 0; i < imageWidth; ++i) {
-            color pixelColor = NewColor(0, 0, 0);
+        for (int i = 0; i < width; ++i) {
+            color pixelColor = (color){0.0, 0.0, 0.0};
             for (int s = 0; s < samplesPerPixel; ++s) {
-                double u = (i + RandomDouble()) / (imageWidth - 1);
-                double v = (j + RandomDouble()) / (imageHeight - 1);
-                ray r = GetRay(tdata->cam, u, v);
-                vec3 rayColor = Ray_Color(&r, tdata->world, maxDepth);
+                const double u = (i + RandomDouble()) / (width - 1);
+                const double v = (j + RandomDouble()) / (height - 1);
+                const ray r = GetRay(tdata->cam, u, v);
+                const vec3 rayColor = Ray_Color(&r, tdata->world, maxDepth);
                 Vec3_AddAssign(&pixelColor, &rayColor);
             }
-            int invJ = imageHeight - j - 1;
-            int index = imageWidth * invJ + i;
-            (*tdata).out[index] = pixelColor;
+            outData[index] = pixelColor;
+            index++;
         }
     }
-    printf("Thread with range (%d, %d) finished\n", start, stop);
-    pthread_exit(NULL);
-    return NULL;
+    pthread_exit(outData);
+    return outData;
 }
 
 void Render() {
 
+    // Settings
+    const double aspectRatio = 3.0 / 2.0;
+    const int imageWidth = 600;
+    const int imageHeight = (int)(imageWidth / aspectRatio);
+    const int samplesPerPixel = 100;
+    const double colorScale = 1.0 / samplesPerPixel;
+    const int maxDepth = 50;
+
     // Create World
-    hittable_list world = randomScene();
+    hittable_list *world = randomScene();
 
     // Camera
-    vec3 lookfrom = {13, 2, 3};
-    vec3 lookat = {0, 0, 0};
-    vec3 vup = {0, 1, 0};
-    double distToFocus = 10.0;
-    double aperture = 0.1;
-    camera cam = NewCamera(lookfrom, lookat, vup, 20, aspectRatio, aperture,
-                           distToFocus);
+    const vec3 lookfrom = {13, 2, 3};
+    const vec3 lookat = {0, 0, 0};
+    const vec3 vup = {0, 1, 0};
+    const double distToFocus = 10.0;
+    const double aperture = 0.1;
+    camera *cam = NewCamera(lookfrom, lookat, vup, 20, aspectRatio, aperture,
+                            distToFocus);
 
-    color *pixelColorArray =
-        (color *)malloc(sizeof(color) * imageWidth * imageHeight);
+    // Multi-threaded rendering
+    const int threadCount = 4;
+    pthread_t tid[threadCount];
+    thread_input td[threadCount];
+    for (int t = 0; t < threadCount; ++t) {
 
-    // Multi-thread render
-    int threadSize = 4;
-    pthread_t tid[threadSize];
-    thread_data td[threadSize];
-    for (int t = 0; t < threadSize; ++t) {
-        td[t].startRow = t * (imageHeight / threadSize);
-        td[t].stopRow = (t + 1) * (imageHeight / threadSize);
-        td[t].cam = &cam;
-        td[t].world = &world;
-        td[t].out = pixelColorArray;
+        td[t].imageWidth = imageWidth;
+        td[t].imageHeight = imageHeight;
+        td[t].samplesPerPixel = samplesPerPixel;
+        td[t].maxDepth = maxDepth;
+
+        td[t].startRow = t * (imageHeight / threadCount);
+        td[t].stopRow = (t + 1) * (imageHeight / threadCount);
+        if (td[t].stopRow > (imageWidth * imageHeight)) {
+            td[t].stopRow = imageWidth * imageHeight;
+        }
+        td[t].cam = cam;
+        td[t].world = world;
         printf("Thread with range (%d, %d) started\n", td[t].startRow,
                td[t].stopRow);
         pthread_create(&(tid[t]), NULL, renderPixel, (void *)&(td[t]));
     }
-    for (int i = 0; i < threadSize; ++i) {
-        pthread_join(tid[i], NULL);
+
+    color *pixelColorArray =
+        (color *)malloc(sizeof(color) * imageWidth * imageHeight);
+
+    // collect the results
+    for (int t = 0; t < threadCount; ++t) {
+        color *temp = NULL;
+        pthread_join(tid[t], (void **)&temp);
+
+        const int start = td[t].startRow;
+        const int stop = td[t].stopRow;
+
+        int index = 0;
+        for (int j = start; j < stop; ++j) {
+            for (int i = 0; i < imageWidth; ++i) {
+                const int invJ = imageHeight - j - 1;
+                const int imageIndex = imageWidth * invJ + i;
+                pixelColorArray[imageIndex] = temp[index];
+                index++;
+            }
+        }
+
+        if (temp != NULL) {
+            free(temp);
+        }
     }
 
     // output to file
-    FILE *file;
+    FILE *file = NULL;
     if ((file = fopen("output.ppm", "w+")) == NULL) {
         perror("fopen");
         exit(1);
     }
     fprintf(file, "P3\n%d %d\n255\n", imageWidth, imageHeight);
     for (int i = 0; i < imageWidth * imageHeight; ++i) {
-        WriteColor(file, pixelColorArray[i], samplesPerPixel);
+        WriteColor(file, pixelColorArray[i], colorScale);
     }
-    free(pixelColorArray);
     fclose(file);
+
+    free(pixelColorArray);
+    free(cam);
+    free(world);
 }
 
 int main() {

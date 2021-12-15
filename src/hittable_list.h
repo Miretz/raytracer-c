@@ -4,21 +4,21 @@
 #include "hittable.h"
 #include "sphere.h"
 
-#define MAX_OBJECTS 1000
+#define MAX_OBJECTS 10000
 
 typedef struct hittable_list {
     int count;
-    sphere objects[MAX_OBJECTS];
+    sphere objects[];
 } hittable_list;
 
-int Hittable_Hit(hittable_list *hl, ray *r, double tMin, double tMax,
-                 hit_record *rec) {
+static inline unsigned int Hittable_Hit(const hittable_list *hl, const ray *r,
+                               const double tMin, const double tMax,
+                               hit_record *rec) {
     hit_record tempRec;
     int hitAnything = 0;
     double closestSoFar = tMax;
     for (int i = 0; i < hl->count; ++i) {
-        sphere sp = hl->objects[i];
-        if (Sphere_Hit(&sp, r, tMin, closestSoFar, &tempRec)) {
+        if (Sphere_Hit(&(hl->objects[i]), r, tMin, closestSoFar, &tempRec)) {
             hitAnything = 1;
             closestSoFar = tempRec.t;
             *rec = tempRec;
@@ -27,13 +27,14 @@ int Hittable_Hit(hittable_list *hl, ray *r, double tMin, double tMax,
     return hitAnything;
 }
 
-hittable_list NewHittableList() {
-    hittable_list hl;
-    hl.count = 0;
+static inline hittable_list *NewHittableList() {
+    hittable_list *hl =
+        malloc(sizeof(hittable_list) + MAX_OBJECTS * sizeof(sphere));
+    hl->count = 0;
     return hl;
 }
 
-void Hittable_Add(hittable_list *hl, sphere object) {
+static inline void Hittable_Add(hittable_list *hl, sphere object) {
     hl->objects[hl->count] = object;
     hl->count++;
 }

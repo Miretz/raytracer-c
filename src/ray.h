@@ -9,8 +9,9 @@ typedef struct ray {
     vec3 direction;
 } ray;
 
-point3 Ray_At(ray* r, double t){
-    vec3 d = Vec3_FMul(&r->direction, t);
+static inline point3 Ray_At(const ray* r, const double t){
+    vec3 d = r->direction;
+    Vec3_FMulAssign(&d, t);
     Vec3_AddAssign(&d, &r->origin);
     return d;
 }

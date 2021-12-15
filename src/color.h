@@ -5,21 +5,15 @@
 
 #include <stdio.h>
 
-typedef vec3 color;
-
-color NewColor(double x, double y, double z) {
-    color res = {x, y, z};
-    return res;
-}
-
-void WriteColor(FILE *fp, color pixelColor, int samplesPerPixel) {
-    double scale = 1.0 / samplesPerPixel;
-    double r = sqrt(scale * pixelColor.x);
-    double g = sqrt(scale * pixelColor.y);
-    double b = sqrt(scale * pixelColor.z);
-    fprintf(fp, "%d %d %d\n", (int)(256 * Clamp(r, 0.0, 0.999)),
-            (int)(256 * Clamp(g, 0.0, 0.999)),
-            (int)(256 * Clamp(b, 0.0, 0.999)));
+static inline void WriteColor(FILE *fp, color pixelColor, double colorScale) {
+    static const int colorMax = 256;
+    static const double colorMaxScaled = 0.999;
+    const double r = sqrt(colorScale * pixelColor.x);
+    const double g = sqrt(colorScale * pixelColor.y);
+    const double b = sqrt(colorScale * pixelColor.z);
+    fprintf(fp, "%d %d %d\n", (int)(colorMax * Clamp(r, 0.0, colorMaxScaled)),
+            (int)(colorMax * Clamp(g, 0.0, colorMaxScaled)),
+            (int)(colorMax * Clamp(b, 0.0, colorMaxScaled)));
 }
 
 #endif
