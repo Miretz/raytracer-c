@@ -17,7 +17,9 @@ static inline unsigned int Hittable_Hit(hittable_list *hl, const ray *r,
     hit_record tempRec;
     int hitAnything = 0;
     double closestSoFar = tMax;
-    for (int i = hl->count + 1; i--;) {
+
+    register int i = hl->count + 1;
+    for (i = hl->count + 1; i--;) {
         if (Sphere_Hit(&(hl->objects[i - 1]), r, tMin, closestSoFar,
                        &tempRec)) {
             hitAnything = 1;

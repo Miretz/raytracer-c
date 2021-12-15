@@ -10,7 +10,6 @@
 #include "sphere.h"
 #include "vec3.h"
 
-
 color Ray_Color(const ray *r, hittable_list *world, const int depth) {
     if (depth < 0) {
         return (color){0.0, 0.0, 0.0};
@@ -115,12 +114,16 @@ void *renderPixel(void *arg) {
     const int start = tdata->startRow;
     const int stop = tdata->stopRow;
 
+    register int j = start;
+    register int i = 0;
+    register int s = 0;
+
     color *outData = (color *)malloc(((stop - start) * width) * sizeof(color));
     int index = 0;
-    for (int j = start; j < stop; ++j) {
-        for (int i = 0; i < width; ++i) {
+    for (j = start; j < stop; ++j) {
+        for (i = 0; i < width; ++i) {
             color pixelColor = (color){0.0, 0.0, 0.0};
-            for (int s = samplesPerPixel; s; s--) {
+            for (s = samplesPerPixel; s; s--) {
                 const double u = (i + RandomDouble()) / (width - 1);
                 const double v = (j + RandomDouble()) / (height - 1);
                 const ray r = GetRay(tdata->cam, u, v);
