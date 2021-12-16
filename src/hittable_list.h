@@ -1,6 +1,8 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
+#include <stdbool.h>
+
 #include "hittable.h"
 #include "sphere.h"
 
@@ -11,7 +13,7 @@ typedef struct hittable_list {
     sphere objects[];
 } hittable_list;
 
-static inline unsigned int Hittable_Hit(hittable_list *hl, const ray *r,
+static inline bool Hittable_Hit(hittable_list *hl, const ray *r,
                                         const double tMin, const double tMax,
                                         hit_record *rec) {
     hit_record tempRec;

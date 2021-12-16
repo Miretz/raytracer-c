@@ -12,7 +12,7 @@
 
 color Ray_Color(const ray *r, hittable_list *world, const int depth) {
     if (depth < 0) {
-        return (color){0.0, 0.0, 0.0};
+        return (color){{0.0, 0.0, 0.0}};
     }
     hit_record rec = {};
     if (Hittable_Hit(world, r, 0.001, 99999.0, &rec)) {
@@ -25,9 +25,9 @@ color Ray_Color(const ray *r, hittable_list *world, const int depth) {
         }
     }
     const vec3 unitDirection = Vec3_UnitVector(&r->direction);
-    double t = 0.5 * (unitDirection.y + 1.0);
-    static const color bgColor1 = {1.0, 1.0, 1.0};
-    static const color bgColor2 = {0.5, 0.7, 1.0};
+    double t = 0.5 * (unitDirection.e[1] + 1.0);
+    static const color bgColor1 = {{1.0, 1.0, 1.0}};
+    static const color bgColor2 = {{0.5, 0.7, 1.0}};
 
     vec3 r1 = Vec3_FMul(&bgColor1, (1.0 - t));
     const vec3 r2 = Vec3_FMul(&bgColor2, t);
@@ -38,18 +38,18 @@ color Ray_Color(const ray *r, hittable_list *world, const int depth) {
 hittable_list *randomScene() {
     hittable_list *world = NewHittableList();
 
-    const material groundMaterial = NewMaterial(0, (color){0.5, 0.5, 0.5}, 0.0);
+    const material groundMaterial = NewMaterial(0, (color){{0.5, 0.5, 0.5}}, 0.0);
     const sphere ground =
-        NewSphere((point3){0, -1000, 0}, 1000, groundMaterial);
+        NewSphere((point3){{0, -1000, 0}}, 1000, groundMaterial);
     Hittable_Add(world, ground);
 
-    static const point3 maxDist = {4, 0.2, 0};
+    static const point3 maxDist = {{4, 0.2, 0}};
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             const double chooseMat = RandomDouble();
-            const point3 center = {(double)a + 0.9 * RandomDouble(), 0.2,
-                                   (double)b + 0.9 * RandomDouble()};
+            const point3 center = {{(double)a + 0.9 * RandomDouble(), 0.2,
+                                   (double)b + 0.9 * RandomDouble()}};
 
             const vec3 subPoint = Vec3_Sub(&center, &maxDist);
             if (Vec3_Length(&subPoint) > 0.9) {
@@ -70,7 +70,7 @@ hittable_list *randomScene() {
                 } else {
                     // glass
                     sphereMaterial =
-                        NewMaterial(2, (color){1.0, 1.0, 1.0}, 1.5);
+                        NewMaterial(2, (color){{1.0, 1.0, 1.0}}, 1.5);
                 }
 
                 Hittable_Add(world, NewSphere(center, 0.2, sphereMaterial));
@@ -78,13 +78,13 @@ hittable_list *randomScene() {
         }
     }
 
-    const material material1 = NewMaterial(2, (color){1.0, 1.0, 1.0}, 1.5);
-    const material material2 = NewMaterial(0, (color){0.4, 0.2, 0.1}, 0.0);
-    const material material3 = NewMaterial(1, (color){0.7, 0.6, 0.5}, 0.0);
+    const material material1 = NewMaterial(2, (color){{1.0, 1.0, 1.0}}, 1.5);
+    const material material2 = NewMaterial(0, (color){{0.4, 0.2, 0.1}}, 0.0);
+    const material material3 = NewMaterial(1, (color){{0.7, 0.6, 0.5}}, 0.0);
 
-    const sphere s1 = NewSphere((point3){0, 1, 0}, 1.0, material1);
-    const sphere s2 = NewSphere((point3){-4, 1, 0}, 1.0, material2);
-    const sphere s3 = NewSphere((point3){4, 1, 0}, 1.0, material3);
+    const sphere s1 = NewSphere((point3){{0, 1, 0}}, 1.0, material1);
+    const sphere s2 = NewSphere((point3){{-4, 1, 0}}, 1.0, material2);
+    const sphere s3 = NewSphere((point3){{4, 1, 0}}, 1.0, material3);
 
     Hittable_Add(world, s1);
     Hittable_Add(world, s2);
@@ -122,7 +122,7 @@ void *renderPixel(void *arg) {
     int index = 0;
     for (j = start; j < stop; ++j) {
         for (i = 0; i < width; ++i) {
-            color pixelColor = (color){0.0, 0.0, 0.0};
+            color pixelColor = (color){{0.0, 0.0, 0.0}};
             for (s = samplesPerPixel; s; s--) {
                 const double u = (i + RandomDouble()) / (width - 1);
                 const double v = (j + RandomDouble()) / (height - 1);
@@ -152,16 +152,16 @@ void Render() {
     hittable_list *world = randomScene();
 
     // Camera
-    const vec3 lookfrom = {13, 2, 3};
-    const vec3 lookat = {0, 0, 0};
-    const vec3 vup = {0, 1, 0};
+    const vec3 lookfrom = {{13, 2, 3}};
+    const vec3 lookat = {{0, 0, 0}};
+    const vec3 vup = {{0, 1, 0}};
     const double distToFocus = 10.0;
     const double aperture = 0.1;
     camera *cam = NewCamera(lookfrom, lookat, vup, 20, aspectRatio, aperture,
                             distToFocus);
 
     // Multi-threaded rendering
-    const int threadCount = 4;
+    const int threadCount = 100;
     pthread_t tid[threadCount];
     thread_input td[threadCount];
     for (int t = 0; t < threadCount; ++t) {

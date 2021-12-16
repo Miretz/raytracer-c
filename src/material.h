@@ -1,17 +1,18 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include <stdbool.h>
+#include <stdlib.h>
+
+
 #include "common.h"
 #include "ray.h"
 #include "vec3.h"
-#include <stdlib.h>
 
 // Lambertian
 
-static inline unsigned int Lambertian_Scatter(const material *l,
-                                              const hit_record *rec,
-                                              color *attenuation,
-                                              ray *scattered) {
+static inline bool Lambertian_Scatter(const material *l, const hit_record *rec,
+                                      color *attenuation, ray *scattered) {
     vec3 randomUnit = Vec3_RandomUnitVector();
     vec3 scatterDirection = Vec3_Add(&rec->normal, &randomUnit);
     if (Vec3_NearZero(&scatterDirection) == 1) {
@@ -25,9 +26,9 @@ static inline unsigned int Lambertian_Scatter(const material *l,
 
 // Metal
 
-static inline unsigned int Metal_Scatter(const material *l, const ray *rayIn,
-                                         const hit_record *rec,
-                                         color *attenuation, ray *scattered) {
+static inline bool Metal_Scatter(const material *l, const ray *rayIn,
+                                 const hit_record *rec, color *attenuation,
+                                 ray *scattered) {
 
     vec3 unitDir = Vec3_UnitVector(&rayIn->direction);
     vec3 reflected = Vec3_Reflect(&unitDir, &rec->normal);
@@ -48,10 +49,10 @@ static inline double Dielectric_Reflectance(const double cosine,
     return r0 + (1 - r0) * pow((1 - cosine), 5);
 }
 
-static inline unsigned int
-Dielectric_Scatter(const material *l, const ray *rayIn, const hit_record *rec,
-                   color *attenuation, ray *scattered) {
-    *attenuation = (color){1.0, 1.0, 1.0};
+static inline bool Dielectric_Scatter(const material *l, const ray *rayIn,
+                                      const hit_record *rec, color *attenuation,
+                                      ray *scattered) {
+    *attenuation = (color){{1.0, 1.0, 1.0}};
     double refractionRatio = l->fuzz;
     if (rec->frontFace) {
         refractionRatio = 1.0 / l->fuzz;
@@ -75,9 +76,9 @@ Dielectric_Scatter(const material *l, const ray *rayIn, const hit_record *rec,
     return 1;
 }
 
-static inline unsigned int Mat_Scatter(const material *l, const ray *rayIn,
-                                       const hit_record *rec,
-                                       color *attenuation, ray *scattered) {
+static inline bool Mat_Scatter(const material *l, const ray *rayIn,
+                               const hit_record *rec, color *attenuation,
+                               ray *scattered) {
 
     switch (l->type) {
     case 0:

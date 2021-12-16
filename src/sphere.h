@@ -1,12 +1,14 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include <stdbool.h>
+
 #include "common.h"
 #include "hittable.h"
 #include "material.h"
 #include "vec3.h"
 
-static inline unsigned int Sphere_Hit(sphere *s, const ray *r, const double tMin,
+static inline bool Sphere_Hit(sphere *s, const ray *r, const double tMin,
                const double tMax, hit_record *rec) {
     const vec3 oc = Vec3_Sub(&r->origin, &s->center);
     const double halfB = Vec3_Dot(&oc, &r->direction);

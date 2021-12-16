@@ -1,13 +1,15 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdbool.h>
+
 #include "vec3.h"
 #include "color.h"
 
 typedef struct material {
     int type;
     color albedo;
-    double fuzz;
+    double fuzz;    
 } material;
 
 typedef struct sphere {
@@ -18,9 +20,9 @@ typedef struct sphere {
 
 typedef struct hit_record {
     point3 p;
-    vec3 normal;
     double t;
-    int frontFace;
+    vec3 normal;
+    bool frontFace;
     material* matPtr;
 } hit_record;
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(raytracer-c C)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -Wextra -O3 -ffast-math -msse -mavx -ftree-vectorize")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -Wextra -O3 -ffast-math -msse -mavx2 -ftree-vectorize")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -16,7 +16,7 @@ set(SOURCES
     src/material.h
     src/ray.h
     src/sphere.h
-    src/main.c    
+    src/main.c
 )
 
 add_executable(raytracer-c ${SOURCES})
