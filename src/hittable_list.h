@@ -6,7 +6,7 @@
 #include "hittable.h"
 #include "sphere.h"
 
-#define MAX_OBJECTS 10000
+#define MAX_OBJECTS 1000
 
 typedef struct hittable_list {
     int count;
@@ -17,14 +17,14 @@ static inline bool Hittable_Hit(hittable_list *hl, const ray *r,
                                         const double tMin, const double tMax,
                                         hit_record *rec) {
     hit_record tempRec;
-    int hitAnything = 0;
+    bool hitAnything = false;
     double closestSoFar = tMax;
 
     register int i = hl->count + 1;
     for (i = hl->count + 1; i--;) {
         if (Sphere_Hit(&(hl->objects[i - 1]), r, tMin, closestSoFar,
                        &tempRec)) {
-            hitAnything = 1;
+            hitAnything = true;
             closestSoFar = tempRec.t;
             *rec = tempRec;
         }
@@ -33,8 +33,8 @@ static inline bool Hittable_Hit(hittable_list *hl, const ray *r,
 }
 
 static inline hittable_list *NewHittableList() {
-    hittable_list *hl =
-        malloc(sizeof(hittable_list) + MAX_OBJECTS * sizeof(sphere));
+    hittable_list *hl = (hittable_list *)malloc(sizeof(hittable_list) +
+                                                MAX_OBJECTS * sizeof(sphere));
     hl->count = 0;
     return hl;
 }

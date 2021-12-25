@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include <pthread.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "camera.h"
 #include "hittable.h"
@@ -25,20 +26,21 @@ color Ray_Color(const ray *r, hittable_list *world, const int depth) {
         }
     }
     const vec3 unitDirection = Vec3_UnitVector(&r->direction);
-    double t = 0.5 * (unitDirection.e[1] + 1.0);
-    static const color bgColor1 = {{1.0, 1.0, 1.0}};
-    static const color bgColor2 = {{0.5, 0.7, 1.0}};
+    const double t = 0.5 * (unitDirection.e[1] + 1.0);
 
-    vec3 r1 = Vec3_FMul(&bgColor1, (1.0 - t));
-    const vec3 r2 = Vec3_FMul(&bgColor2, t);
-    Vec3_AddAssign(&r1, &r2);
-    return r1;
+    color bgColor1 = {{1.0, 1.0, 1.0}};
+    color bgColor2 = {{0.5, 0.7, 1.0}};
+    Vec3_FMulAssign(&bgColor1, (1.0 - t));
+    Vec3_FMulAssign(&bgColor2, t);
+    Vec3_AddAssign(&bgColor1, &bgColor2);
+    return bgColor1;
 }
 
 hittable_list *randomScene() {
     hittable_list *world = NewHittableList();
 
-    const material groundMaterial = NewMaterial(0, (color){{0.5, 0.5, 0.5}}, 0.0);
+    const material groundMaterial =
+        NewMaterial(0, (color){{0.5, 0.5, 0.5}}, 0.0);
     const sphere ground =
         NewSphere((point3){{0, -1000, 0}}, 1000, groundMaterial);
     Hittable_Add(world, ground);
@@ -49,7 +51,7 @@ hittable_list *randomScene() {
         for (int b = -11; b < 11; b++) {
             const double chooseMat = RandomDouble();
             const point3 center = {{(double)a + 0.9 * RandomDouble(), 0.2,
-                                   (double)b + 0.9 * RandomDouble()}};
+                                    (double)b + 0.9 * RandomDouble()}};
 
             const vec3 subPoint = Vec3_Sub(&center, &maxDist);
             if (Vec3_Length(&subPoint) > 0.9) {
@@ -117,9 +119,10 @@ void *renderPixel(void *arg) {
     register int j = start;
     register int i = 0;
     register int s = 0;
+    register int index = 0;
 
     color *outData = (color *)malloc(((stop - start) * width) * sizeof(color));
-    int index = 0;
+
     for (j = start; j < stop; ++j) {
         for (i = 0; i < width; ++i) {
             color pixelColor = (color){{0.0, 0.0, 0.0}};
@@ -178,8 +181,6 @@ void Render() {
         }
         td[t].cam = cam;
         td[t].world = world;
-        printf("Thread with range (%d, %d) started\n", td[t].startRow,
-               td[t].stopRow);
         pthread_create(&(tid[t]), NULL, renderPixel, (void *)&(td[t]));
     }
 
@@ -227,6 +228,17 @@ void Render() {
 }
 
 int main() {
+
+    // Not an ideal way to measure time
+    // It's here to give a rough idea of time spent
+    // same as in the go version here https://github.com/Miretz/raytracer-go
+    clock_t start = clock();
+
     Render();
+
+    clock_t end = clock();
+    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+    printf("The program took %f seconds.", seconds);
+
     return 0;
 }

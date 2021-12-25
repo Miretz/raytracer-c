@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-
 #include "common.h"
 #include "ray.h"
 #include "vec3.h"
@@ -13,15 +12,14 @@
 
 static inline bool Lambertian_Scatter(const material *l, const hit_record *rec,
                                       color *attenuation, ray *scattered) {
-    vec3 randomUnit = Vec3_RandomUnitVector();
+    const vec3 randomUnit = Vec3_RandomUnitVector();
     vec3 scatterDirection = Vec3_Add(&rec->normal, &randomUnit);
-    if (Vec3_NearZero(&scatterDirection) == 1) {
+    if (Vec3_NearZero(&scatterDirection)) {
         scatterDirection = rec->normal;
     }
-    scattered->origin = rec->p;
-    scattered->direction = scatterDirection;
+    *scattered = (ray){rec->p, scatterDirection};
     *attenuation = l->albedo;
-    return 1;
+    return true;
 }
 
 // Metal
@@ -30,14 +28,14 @@ static inline bool Metal_Scatter(const material *l, const ray *rayIn,
                                  const hit_record *rec, color *attenuation,
                                  ray *scattered) {
 
-    vec3 unitDir = Vec3_UnitVector(&rayIn->direction);
-    vec3 reflected = Vec3_Reflect(&unitDir, &rec->normal);
+    const vec3 unitDir = Vec3_UnitVector(&rayIn->direction);
+    const vec3 reflected = Vec3_Reflect(&unitDir, &rec->normal);
     vec3 randomInUnit = Vec3_RandomInUnitSphere();
     Vec3_FMulAssign(&randomInUnit, l->fuzz);
-    ray scResult = {rec->p, Vec3_Add(&reflected, &randomInUnit)};
-    *scattered = scResult;
+    const vec3 scatterDirection = Vec3_Add(&reflected, &randomInUnit);
+    *scattered = (ray){rec->p, scatterDirection};
     *attenuation = l->albedo;
-    return Vec3_Dot(&scattered->direction, &rec->normal) > 0;
+    return Vec3_Dot(&scatterDirection, &rec->normal) > 0.0;
 }
 
 // Dielectric
@@ -57,23 +55,25 @@ static inline bool Dielectric_Scatter(const material *l, const ray *rayIn,
     if (rec->frontFace) {
         refractionRatio = 1.0 / l->fuzz;
     }
-    vec3 unitDirection = Vec3_UnitVector(&rayIn->direction);
-    vec3 unitDirNeg = Vec3_Neg(&unitDirection);
-    double cosTheta = fmin(Vec3_Dot(&unitDirNeg, &rec->normal), 1.0);
-    double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-    int cannotRefract = refractionRatio * sinTheta > 1.0;
+    const vec3 unitDirection = Vec3_UnitVector(&rayIn->direction);
+    const vec3 unitDirNeg = Vec3_Neg(&unitDirection);
+    const double cosTheta = fmin(Vec3_Dot(&unitDirNeg, &rec->normal), 1.0);
+    const double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+    const bool cannotRefract = refractionRatio * sinTheta > 1.0;
 
-    if (cannotRefract == 1 ||
+    ray result;
+    result.origin = rec->p;
+
+    if (cannotRefract ||
         Dielectric_Reflectance(cosTheta, refractionRatio) > RandomDouble()) {
-        ray res = {rec->p, Vec3_Reflect(&unitDirection, &rec->normal)};
-        *scattered = res;
+        result.direction = Vec3_Reflect(&unitDirection, &rec->normal);
     } else {
-        ray res = {rec->p,
-                   Vec3_Refract(&unitDirection, &rec->normal, refractionRatio)};
-        *scattered = res;
+        result.direction =
+            Vec3_Refract(&unitDirection, &rec->normal, refractionRatio);
     }
 
-    return 1;
+    *scattered = result;
+    return true;
 }
 
 static inline bool Mat_Scatter(const material *l, const ray *rayIn,

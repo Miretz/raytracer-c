@@ -26,7 +26,7 @@ static inline camera *NewCamera(const point3 lookfrom, const point3 lookat,
     const double viewportHeight = 2.0 * tan(DegreesToRadians(vFov) / 2.0);
     const double viewportWidth = aspectRatio * viewportHeight;
 
-    camera *c = malloc(sizeof(camera));
+    camera *c = (camera *)malloc(sizeof(camera));
 
     const vec3 diffLook = Vec3_Sub(&lookfrom, &lookat);
     c->w = Vec3_UnitVector(&diffLook);
@@ -36,7 +36,7 @@ static inline camera *NewCamera(const point3 lookfrom, const point3 lookat,
     c->origin = lookfrom;
     c->horizontal = Vec3_FMul(&c->u, viewportWidth * focusDist);
     c->vertical = Vec3_FMul(&c->v, viewportHeight * focusDist);
-    
+
     vec3 llcResult = lookfrom;
     vec3 halfH = Vec3_FDiv(&c->horizontal, 2.0);
     vec3 halfV = Vec3_FDiv(&c->vertical, 2.0);
@@ -45,7 +45,7 @@ static inline camera *NewCamera(const point3 lookfrom, const point3 lookat,
     Vec3_SubAssign(&llcResult, &halfV);
     Vec3_SubAssign(&llcResult, &focusV);
     c->lowerLeftCorner = llcResult;
-    
+
     c->lensRadius = aperture / 2.0;
     return c;
 }
